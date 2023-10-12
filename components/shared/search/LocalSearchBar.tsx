@@ -1,3 +1,5 @@
+"use client";
+
 import Image from "next/image";
 import React from "react";
 import { Input } from "@/components/ui/input";
@@ -18,8 +20,10 @@ const LocalSearchBar = ({
   otherClasses,
 }: CustomInputProps) => {
   return (
-    <div className="relative w-full ">
-      <div className="background-light800_darkgradient relative flex min-h-[56px] grow items-center gap-1 rounded-xl px-4">
+    <div
+      className={`background-light800_darkgradient flex min-h-[56px] grow items-center gap-4 rounded-[10px] px-4 ${otherClasses}`}
+    >
+      {iconPosition === "left" && (
         <Image
           src="/assets/icons/search.svg"
           alt="search"
@@ -27,13 +31,23 @@ const LocalSearchBar = ({
           height={24}
           className="cursor-pointer"
         />
-        <Input
-          type="text"
-          placeholder="Search globally"
-          value=""
-          className="paragraph-regular no-focus placeholder background-light800_darkgradient border-none shadow-none outline-none"
+      )}
+      <Input
+        type="text"
+        placeholder="Search globally"
+        value=""
+        onChange={() => {}}
+        className="paragraph-regular no-focus placeholder background-light800_darkgradient border-none shadow-none outline-none"
+      />
+      {iconPosition === "right" && (
+        <Image
+          src="/assets/icons/search.svg"
+          alt="search"
+          width={20}
+          height={24}
+          className="cursor-pointer"
         />
-      </div>
+      )}
     </div>
   );
 };

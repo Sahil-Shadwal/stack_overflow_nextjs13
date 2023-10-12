@@ -21,6 +21,7 @@ export default function Home() {
           placeholder="Search for questions"
           otherClasses="flex-1"
         />
+        Filters
       </div>
     </>
   );
