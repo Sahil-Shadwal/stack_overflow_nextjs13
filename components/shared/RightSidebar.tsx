@@ -4,23 +4,23 @@ import React from "react";
 import RenderTag from "./RenderTag";
 
 const hotQuestions = [
-  { _id: 1, title: "How do I use epress as a custom server in NextJS?" },
-  { _id: 2, title: "Cascading Deletes in SQLAlchemy?" },
-  { _id: 3, title: "How to perfectly center a div with Tailwind CSS?" },
+  { _id: "1", title: "How do I use epress as a custom server in NextJS?" },
+  { _id: "2", title: "Cascading Deletes in SQLAlchemy?" },
+  { _id: "3", title: "How to perfectly center a div with Tailwind CSS?" },
   {
-    _id: 4,
+    _id: "4",
     title:
       "Best practices for data fetching in a Next.js application with Server-Side Rendering(SSR)?",
   },
-  { _id: 5, title: "Redux Toolkit Not Updating State as expected" },
+  { _id: "5", title: "Redux Toolkit Not Updating State as expected" },
 ];
 
 const popularTags = [
-  { _id: 1, name: "javascript", totalQuestions: 5 },
-  { _id: 2, name: "react", totalQuestions: 3 },
-  { _id: 3, name: "next", totalQuestions: 4 },
-  { _id: 4, name: "redux", totalQuestions: 2 },
-  { _id: 5, name: "java", totalQuestions: 5 },
+  { _id: "1", name: "javascript", totalQuestions: 5 },
+  { _id: "2", name: "react", totalQuestions: 3 },
+  { _id: "3", name: "next", totalQuestions: 4 },
+  { _id: "4", name: "redux", totalQuestions: 2 },
+  { _id: "5", name: "java", totalQuestions: 5 },
 ];
 
 const RightSidebar = () => {
