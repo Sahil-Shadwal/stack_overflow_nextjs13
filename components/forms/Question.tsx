@@ -1,9 +1,9 @@
 "use client";
 import React, { useRef, useState } from "react";
 import { Editor } from "@tinymce/tinymce-react";
-
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
+import { useForm } from "react-hook-form";
 import {
   Form,
   FormControl,
@@ -13,20 +13,25 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-
 import { Input } from "@/components/ui/input";
 import { Button } from "../ui/button";
-import { useForm } from "react-hook-form";
-import { QuestionsSchema } from "@/lib/validation";
+import { QuestionsSchema } from "@/lib/validations";
 import { Badge } from "../ui/badge";
 import Image from "next/image";
 import { createQuestion } from "@/lib/actions/question.action";
+import { useRouter, usePathname } from "next/navigation";
 
 const type: any = "create";
 
-const Question = () => {
+interface Props {
+  mongoUserId: string;
+}
+
+const Question = ({ mongoUserId }: Props) => {
   const editorRef = useRef(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const router = useRouter();
+  const pathname = usePathname();
 
   // 1. Define your form.
   const form = useForm<z.infer<typeof QuestionsSchema>>({
@@ -45,8 +50,17 @@ const Question = () => {
     try {
       // make an async call to your API -> create a question
       // contain all form data
-      await createQuestion({});
+
+      await createQuestion({
+        title: values.title,
+        content: values.explanation,
+        tags: values.tags,
+        author: JSON.parse(mongoUserId),
+        path: pathname,
+      });
+
       // navigate to home page
+      router.push("/");
     } catch (error) {
     } finally {
       setIsSubmitting(false);
@@ -67,7 +81,7 @@ const Question = () => {
         if (tagValue.length > 15) {
           return form.setError("tags", {
             type: "required",
-            message: "Tags can only be 15 characters long",
+            message: "Tag must be less than 15 characters.",
           });
         }
 
@@ -128,10 +142,10 @@ const Question = () => {
               <FormControl className="mt-3.5">
                 <Editor
                   apiKey={process.env.NEXT_PUBLIC_TINY_EDITOR_API_KEY}
-                  onInit={(evt, editor) =>
+                  onInit={(evt, editor) => {
                     // @ts-ignore
-                    (editorRef.current = editor)
-                  }
+                    editorRef.current = editor;
+                  }}
                   onBlur={field.onBlur}
                   onEditorChange={(content) => field.onChange(content)}
                   initialValue=""
@@ -157,8 +171,8 @@ const Question = () => {
                     ],
                     toolbar:
                       "undo redo | " +
-                      "codesample | bold italic forecolor | alignleft aligncenter " +
-                      "alignright alignjustify | bullist numlist ",
+                      "codesample | bold italic forecolor | alignleft aligncenter |" +
+                      "alignright alignjustify | bullist numlist",
                     content_style: "body { font-family:Inter; font-size:16px }",
                   }}
                 />
@@ -186,6 +200,7 @@ const Question = () => {
                     placeholder="Add tags..."
                     onKeyDown={(e) => handleInputKeyDown(e, field)}
                   />
+
                   {field.value.length > 0 && (
                     <div className="flex-start mt-2.5 gap-2.5">
                       {field.value.map((tag: any) => (
