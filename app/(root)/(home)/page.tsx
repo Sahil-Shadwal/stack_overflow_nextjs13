@@ -2,7 +2,7 @@ import QuestionCard from "@/components/cards/QuestionCard";
 import HomeFilters from "@/components/home/HomeFilters";
 import Filter from "@/components/shared/Filter";
 import NoResult from "@/components/shared/NoResult";
-import LocalSearchbar from "@/components/shared/search/LocalSearchbar";
+import LocalSearchBar from "@/components/shared/search/LocalSearchBar";
 import { Button } from "@/components/ui/button";
 import { HomePageFilters } from "@/constants/filters";
 import { getQuestions } from "@/lib/actions/question.action";
@@ -24,7 +24,7 @@ export default async function Home() {
       </div>
 
       <div className="mt-11 flex justify-between gap-5 max-sm:flex-col sm:items-center">
-        <LocalSearchbar
+        <LocalSearchBar
           route="/"
           iconPosition="left"
           imgSrc="/assets/icons/search.svg"
