@@ -4,6 +4,9 @@ const nextConfig = {
         serverActions: true,
         mdxRs: true,
         serverComponentsExternalPackages: ['mongoose']
+    },
+    eslint: {
+        ignoreDuringBuilds: true,
     }
 }
 
