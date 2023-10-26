@@ -3,7 +3,6 @@ import React from "react";
 import RenderTag from "../shared/RenderTag";
 import Metric from "../shared/Metric";
 import { formatAndDivideNumber, getTimestamp } from "@/lib/utils";
-import { get } from "http";
 
 interface QuestionProps {
   _id: string;
@@ -17,7 +16,7 @@ interface QuestionProps {
     name: string;
     picture: string;
   };
-  upvotes: number;
+  upvotes: string[];
   views: number;
   answers: Array<object>;
   createdAt: Date;
@@ -46,13 +45,16 @@ const QuestionCard = ({
             </h3>
           </Link>
         </div>
+
         {/* If signed in add edit delete actions */}
       </div>
+
       <div className="mt-3.5 flex flex-wrap gap-2">
         {tags.map((tag) => (
           <RenderTag key={tag._id} _id={tag._id} name={tag.name} />
         ))}
       </div>
+
       <div className="flex-between mt-6 w-full flex-wrap gap-3">
         <Metric
           imgUrl={author.picture}
@@ -61,12 +63,13 @@ const QuestionCard = ({
           title={` - asked ${getTimestamp(createdAt)}`}
           href={`/profile/${author._id}`}
           isAuthor
-          textStyles="small-medium text-dark400_light800"
+          textStyles="body-medium text-dark400_light700"
         />
+
         <Metric
           imgUrl="/assets/icons/like.svg"
           alt="Upvotes"
-          value={formatAndDivideNumber(upvotes)}
+          value={formatAndDivideNumber(upvotes.length)}
           title=" Votes"
           textStyles="small-medium text-dark400_light800"
         />
@@ -81,7 +84,7 @@ const QuestionCard = ({
           imgUrl="/assets/icons/eye.svg"
           alt="eye"
           value={formatAndDivideNumber(views)}
-          title=" Votes"
+          title=" Views"
           textStyles="small-medium text-dark400_light800"
         />
       </div>
