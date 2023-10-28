@@ -77,7 +77,7 @@ const Page = async ({ params, searchParams }: any) => {
           imgUrl="/assets/icons/eye.svg"
           alt="eye"
           value={formatAndDivideNumber(result.views)}
-          title=" Votes"
+          title=" Views"
           textStyles="small-medium text-dark400_light800"
         />
       </div>
