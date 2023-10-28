@@ -4,16 +4,19 @@ import { URLProps } from "@/types";
 import { SignedIn, auth } from "@clerk/nextjs";
 import Image from "next/image";
 import Link from "next/link";
-import React from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+
+import React from "react";
 import { getJoinedDate } from "@/lib/utils";
 import ProfileLink from "@/components/shared/ProfileLink";
 import Stats from "@/components/shared/Stats";
 import QuestionTab from "@/components/shared/QuestionTab";
+import AnswersTab from "@/components/shared/AnswersTab";
 
-const page = async ({ params, searchParams }: URLProps) => {
+const Page = async ({ params, searchParams }: URLProps) => {
   const { userId: clerkId } = auth();
   const userInfo = await getUserInfo({ userId: params.id });
+
   return (
     <>
       <div className="flex flex-col-reverse items-start justify-between sm:flex-row">
@@ -25,6 +28,7 @@ const page = async ({ params, searchParams }: URLProps) => {
             height={140}
             className="rounded-full object-cover"
           />
+
           <div className="mt-3">
             <h2 className="h2-bold text-dark100_light900">
               {userInfo.user.name}
@@ -41,17 +45,20 @@ const page = async ({ params, searchParams }: URLProps) => {
                   title="Portfolio"
                 />
               )}
+
               {userInfo.user.location && (
                 <ProfileLink
                   imgUrl="/assets/icons/location.svg"
                   title={userInfo.user.location}
                 />
               )}
+
               <ProfileLink
                 imgUrl="/assets/icons/calendar.svg"
                 title={getJoinedDate(userInfo.user.joinedAt)}
               />
             </div>
+
             {userInfo.user.bio && (
               <p className="paragraph-regular text-dark400_light800 mt-8">
                 {userInfo.user.bio}
@@ -59,6 +66,7 @@ const page = async ({ params, searchParams }: URLProps) => {
             )}
           </div>
         </div>
+
         <div className="flex justify-end max-sm:mb-5 max-sm:w-full sm:mt-3">
           <SignedIn>
             {clerkId === userInfo.user.clerkId && (
@@ -71,26 +79,40 @@ const page = async ({ params, searchParams }: URLProps) => {
           </SignedIn>
         </div>
       </div>
+
       <Stats
         totalQuestions={userInfo.totalQuestions}
         totalAnswers={userInfo.totalAnswers}
       />
+
       <div className="mt-10 flex gap-10">
         <Tabs defaultValue="top-posts" className="flex-1">
           <TabsList className="background-light800_dark400 min-h-[42px] p-1">
             <TabsTrigger value="top-posts" className="tab">
-              <QuestionTab />
+              Top Posts
             </TabsTrigger>
             <TabsTrigger value="answers" className="tab">
-              AnswersTab
+              Answers
             </TabsTrigger>
           </TabsList>
-          <TabsContent value="top-posts">POSTS</TabsContent>
-          <TabsContent value="answers">ANSWERS</TabsContent>
+          <TabsContent value="top-posts" className="flex w-full flex-col gap-6">
+            <QuestionTab
+              searchParams={searchParams}
+              userId={userInfo.user._id}
+              clerkId={clerkId}
+            />
+          </TabsContent>
+          <TabsContent value="answers" className="flex w-full flex-col gap-6">
+            <AnswersTab
+              searchParams={searchParams}
+              userId={userInfo.user._id}
+              clerkId={clerkId}
+            />
+          </TabsContent>
         </Tabs>
       </div>
     </>
   );
 };
 
-export default page;
+export default Page;
