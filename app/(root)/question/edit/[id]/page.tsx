@@ -1,15 +1,30 @@
-import React from "react";
+import Question from "@/components/forms/Question";
+import { getQuestionById } from "@/lib/actions/question.action";
+import { getUserById } from "@/lib/actions/user.action";
+import { ParamsProps } from "@/types";
+import { auth } from "@clerk/nextjs";
 
-const page = () => {
+const Page = async ({ params }: ParamsProps) => {
+  const { userId } = auth();
+
+  if (!userId) return null;
+
+  const mongoUser = await getUserById({ userId });
+  const result = await getQuestionById({ questionId: params.id });
+
   return (
-    <div>
-      What&apos;s poppin&apos;? (Pooh, you a fool for this one) Brand new whip,
-      just hopped in (ay, just hopped in) I got options (oh Lord, Jetson made
-      another one) I could pass that bitch like Stockton (it ain&apos;t
-      nothin&apos;) Just joshin&apos; I&apos;ma spend this holiday locked in My
-      body got rid of them toxins (mmh, mmh) SportsCenter, top ten
-    </div>
+    <>
+      <h1 className="h1-bold text-dark100_light900">Edit Question</h1>
+
+      <div className="mt-9">
+        <Question
+          type="Edit"
+          mongoUserId={mongoUser._id}
+          questionDetails={JSON.stringify(result)}
+        />
+      </div>
+    </>
   );
 };
 
-export default page;
+export default Page;

@@ -1,4 +1,5 @@
 "use client";
+
 import { deleteAnswer } from "@/lib/actions/answer.action";
 import { deleteQuestion } from "@/lib/actions/question.action";
 import Image from "next/image";
@@ -19,18 +20,25 @@ const EditDeleteAction = ({ type, itemId }: Props) => {
 
   const handleDelete = async () => {
     if (type === "Question") {
-      // delete question
-      await deleteQuestion({ questionId: JSON.parse(itemId), path: pathname });
+      // Delete question
+      await deleteQuestion({
+        questionId: JSON.parse(itemId),
+        path: pathname,
+      });
     } else if (type === "Answer") {
-      // delete answer
-      await deleteAnswer({ answerId: JSON.parse(itemId), path: pathname });
+      // Delete answer
+      await deleteAnswer({
+        answerId: JSON.parse(itemId),
+        path: pathname,
+      });
     }
   };
+
   return (
     <div className="flex items-center justify-end gap-3 max-sm:w-full">
       {type === "Question" && (
         <Image
-          src="../assets/icons/edit.svg"
+          src="/assets/icons/edit.svg"
           alt="Edit"
           width={14}
           height={14}
@@ -38,8 +46,9 @@ const EditDeleteAction = ({ type, itemId }: Props) => {
           onClick={handleEdit}
         />
       )}
+
       <Image
-        src="../assets/icons/trash.svg"
+        src="/assets/icons/trash.svg"
         alt="Delete"
         width={14}
         height={14}
