@@ -100,7 +100,10 @@ export async function getAllUsers(params: GetAllUsersParams) {
   try {
     connectToDatabase();
 
-    const { searchQuery, filter } = params;
+    const { searchQuery, filter, page = 1, pageSize = 10 } = params;
+
+    // Calculate the number of posts to skip based on the page number and page size
+    const skipAmount = (page - 1) * pageSize;
 
     const query: FilterQuery<typeof User> = {};
 
@@ -129,9 +132,14 @@ export async function getAllUsers(params: GetAllUsersParams) {
 
     // const { page = 1, pageSize = 20, filter, searhQuery } = params;
 
-    const users = await User.find(query).sort(sortOptions);
+    const users = await User.find(query)
+      .sort(sortOptions)
+      .skip(skipAmount)
+      .limit(pageSize);
+    const totalUsers = await User.countDocuments(query);
+    const isNext = totalUsers > skipAmount + users.length;
 
-    return { users };
+    return { users, isNext };
   } catch (error) {
     console.log(error);
     throw error;
