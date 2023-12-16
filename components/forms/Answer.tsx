@@ -78,10 +78,22 @@ const Answer = ({ question, questionId, authorId }: Props) => {
       );
 
       const aiAnswer = await response.json();
+      // console.log(aiAnswer);
+      console.log(aiAnswer);
+      if (aiAnswer.reply) {
+        alert(aiAnswer.reply);
+      } else {
+        alert(
+          "Sorry for the inconvenience. No reply from the server because all credits have been used."
+        );
+      }
+      // alert(aiAnswer.reply);
 
       // Convert plain text to HTML format
-
-      const formattedAnswer = aiAnswer.reply.replace(/\n/g, "<br />");
+      const formattedAnswer = aiAnswer.reply
+        ? aiAnswer.reply.replace(/\n/g, "<br />")
+        : "";
+      // const formattedAnswer = aiAnswer.reply.replace(/\n/g, "<br />");
 
       if (editorRef.current) {
         const editor = editorRef.current as any;
