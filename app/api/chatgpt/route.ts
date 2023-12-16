@@ -27,10 +27,22 @@ export const POST = async (request: Request) => {
     });
 
     const responseData = await response.json();
-    const reply = responseData.choices[0].message.content;
+    if (
+      responseData.choices &&
+      responseData.choices[0] &&
+      responseData.choices[0].message
+    ) {
+      const reply = responseData.choices[0].message.content;
+      return NextResponse.json({ reply });
+    } else {
+      return NextResponse.json({ error: "Unexpected API response structure" });
+    }
+    // const responseData = await response.json();
+    // const reply = responseData.choices[0].message.content;
 
-    return NextResponse.json({ reply });
+    // return NextResponse.json({ reply });
   } catch (error: any) {
+    console.error(error);
     return NextResponse.json({ error: error.message });
   }
 };
