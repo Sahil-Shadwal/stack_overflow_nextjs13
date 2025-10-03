@@ -93,16 +93,36 @@ const Answer = ({ question, questionId, authorId }: Props) => {
 
             console.log("API response status:", response.status);
 
+            const responseData = await response.json();
+            console.log("API response data:", responseData);
+
             if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
+                console.error("API Error:", responseData);
+
+                // Show more specific error messages based on the response
+                let errorMessage =
+                    "Sorry, unable to generate AI answer. Please try again.";
+
+                if (
+                    response.status === 500 &&
+                    responseData.error?.includes("environment variables")
+                ) {
+                    errorMessage =
+                        "AI service is temporarily unavailable. Please try again later.";
+                } else if (response.status === 400) {
+                    errorMessage =
+                        "Invalid request. Please refresh the page and try again.";
+                } else if (responseData.error) {
+                    errorMessage = `Error: ${responseData.error}`;
+                }
+
+                alert(errorMessage);
+                return;
             }
 
-            const aiAnswer = await response.json();
-            console.log("AI Answer received:", aiAnswer);
-
-            if (aiAnswer.reply) {
+            if (responseData.reply) {
                 // Convert plain text to HTML format, preserving line breaks and formatting
-                const formattedAnswer = aiAnswer.reply
+                const formattedAnswer = responseData.reply
                     .replace(/\n/g, "<br />")
                     .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>") // Bold text
                     .replace(/\*(.*?)\*/g, "<em>$1</em>"); // Italic text
@@ -118,16 +138,13 @@ const Answer = ({ question, questionId, authorId }: Props) => {
 
                 console.log("AI answer inserted into editor successfully");
             } else {
-                console.error(
-                    "API Error:",
-                    aiAnswer.error || "No reply received"
-                );
+                console.error("No reply received in response:", responseData);
                 alert("Sorry, unable to generate AI answer. Please try again.");
             }
         } catch (error) {
             console.error("AI Answer Generation Error:", error);
             alert(
-                "Sorry, there was an error generating the AI answer. Please try again."
+                "Sorry, there was a network error generating the AI answer. Please check your connection and try again."
             );
         } finally {
             setSetIsSubmittingAI(false);
