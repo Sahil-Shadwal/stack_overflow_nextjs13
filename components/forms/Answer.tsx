@@ -1,209 +1,221 @@
 "use client";
 
 import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormMessage,
+    Form,
+    FormControl,
+    FormField,
+    FormItem,
+    FormMessage,
 } from "../ui/form";
 import { useForm } from "react-hook-form";
 import { AnswerSchema } from "@/lib/validations";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Editor } from "@tinymce/tinymce-react";
 import { useRef, useState } from "react";
-import { useTheme } from "@/context/ThemeProvider";
 import { Button } from "../ui/button";
 import Image from "next/image";
 import { createAnswer } from "@/lib/actions/answer.action";
 import { usePathname } from "next/navigation";
+import dynamic from "next/dynamic";
+
+// Dynamically import the client-only editor component to avoid SSR issues
+const ClientEditor = dynamic(() => import("./ClientEditor"), {
+    ssr: false,
+    loading: () => (
+        <div className="h-[350px] animate-pulse rounded-md bg-gray-100" />
+    ),
+});
 
 interface Props {
-  question: string;
-  questionId: string;
-  authorId: string;
+    question: string;
+    questionId: string;
+    authorId: string;
 }
 
 const Answer = ({ question, questionId, authorId }: Props) => {
-  const pathname = usePathname();
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isSubmittingAI, setSetIsSubmittingAI] = useState(false);
-  const { mode } = useTheme();
-  const editorRef = useRef(null);
-  const form = useForm<z.infer<typeof AnswerSchema>>({
-    resolver: zodResolver(AnswerSchema),
-    defaultValues: {
-      answer: "",
-    },
-  });
+    const pathname = usePathname();
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [isSubmittingAI, setSetIsSubmittingAI] = useState(false);
+    const editorRef = useRef(null);
 
-  const handleCreateAnswer = async (values: z.infer<typeof AnswerSchema>) => {
-    setIsSubmitting(true);
+    const form = useForm<z.infer<typeof AnswerSchema>>({
+        resolver: zodResolver(AnswerSchema),
+        defaultValues: {
+            answer: "",
+        },
+    });
 
-    try {
-      await createAnswer({
-        content: values.answer,
-        author: JSON.parse(authorId),
-        question: JSON.parse(questionId),
-        path: pathname,
-      });
+    const handleCreateAnswer = async (values: z.infer<typeof AnswerSchema>) => {
+        setIsSubmitting(true);
 
-      form.reset();
+        try {
+            await createAnswer({
+                content: values.answer,
+                author: JSON.parse(authorId),
+                question: JSON.parse(questionId),
+                path: pathname,
+            });
 
-      if (editorRef.current) {
-        const editor = editorRef.current as any;
+            // Reset form first
+            form.reset();
 
-        editor.setContent("");
-      }
-    } catch (error) {
-      console.log(error);
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
+            // Clear editor content
+            if (editorRef.current) {
+                const editor = editorRef.current as any;
+                editor.setContent("");
+            }
 
-  const generateAIAnswer = async () => {
-    if (!authorId) return;
-
-    setSetIsSubmittingAI(true);
-
-    try {
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_SERVER_URL}/api/chatgpt`,
-        {
-          method: "POST",
-          body: JSON.stringify({ question }),
+            // Show success message (optional)
+            console.log("Answer submitted successfully!");
+        } catch (error) {
+            console.error("Error submitting answer:", error);
+            // You could add a toast notification here for better UX
+        } finally {
+            setIsSubmitting(false);
         }
-      );
+    };
 
-      const aiAnswer = await response.json();
-      // console.log(aiAnswer);
-      console.log(aiAnswer);
-      if (aiAnswer.reply) {
-        alert(aiAnswer.reply);
-      } else {
-        alert(
-          "Sorry for the inconvenience. No reply from the server because all credits have been used."
-        );
-      }
-      // alert(aiAnswer.reply);
+    const generateAIAnswer = async () => {
+        if (!authorId) return;
 
-      // Convert plain text to HTML format
-      const formattedAnswer = aiAnswer.reply
-        ? aiAnswer.reply.replace(/\n/g, "<br />")
-        : "";
-      // const formattedAnswer = aiAnswer.reply.replace(/\n/g, "<br />");
+        setSetIsSubmittingAI(true);
 
-      if (editorRef.current) {
-        const editor = editorRef.current as any;
-        editor.setContent(formattedAnswer);
-      }
+        try {
+            console.log("Generating AI answer for question:", question);
 
-      // Toast...
-    } catch (error) {
-      console.log(error);
-    } finally {
-      setSetIsSubmittingAI(false);
-    }
-  };
+            const response = await fetch("/api/chatgpt", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({ question }),
+            });
 
-  return (
-    <div>
-      <div className="flex flex-col justify-between gap-5 sm:flex-row sm:items-center sm:gap-2">
-        <h4 className="paragraph-semibold text-dark400_light800">
-          Write your answer here
-        </h4>
+            console.log("API response status:", response.status);
 
-        <Button
-          className="btn light-border-2 gap-1.5 rounded-md px-4 py-2.5 text-primary-500 shadow-none dark:text-primary-500"
-          onClick={generateAIAnswer}
-        >
-          {isSubmittingAI ? (
-            <>Generating...</>
-          ) : (
-            <>
-              <Image
-                src="/assets/icons/stars.svg"
-                alt="star"
-                width={12}
-                height={12}
-                className="object-contain"
-              />
-              Generate AI Answer
-            </>
-          )}
-        </Button>
-      </div>
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
 
-      <Form {...form}>
-        <form
-          className="mt-6 flex w-full flex-col gap-10"
-          onSubmit={form.handleSubmit(handleCreateAnswer)}
-        >
-          <FormField
-            control={form.control}
-            name="answer"
-            render={({ field }) => (
-              <FormItem className="flex w-full flex-col gap-3">
-                <FormControl className="mt-3.5">
-                  <Editor
-                    apiKey={process.env.NEXT_PUBLIC_TINY_EDITOR_API_KEY}
-                    onInit={(evt, editor) => {
-                      // @ts-ignore
-                      editorRef.current = editor;
-                    }}
-                    onBlur={field.onBlur}
-                    onEditorChange={(content) => field.onChange(content)}
-                    init={{
-                      height: 350,
-                      menubar: false,
-                      plugins: [
-                        "advlist",
-                        "autolink",
-                        "lists",
-                        "link",
-                        "image",
-                        "charmap",
-                        "preview",
-                        "anchor",
-                        "searchreplace",
-                        "visualblocks",
-                        "codesample",
-                        "fullscreen",
-                        "insertdatetime",
-                        "media",
-                        "table",
-                      ],
-                      toolbar:
-                        "undo redo | " +
-                        "codesample | bold italic forecolor | alignleft aligncenter |" +
-                        "alignright alignjustify | bullist numlist",
-                      content_style:
-                        "body { font-family:Inter; font-size:16px }",
-                      skin: mode === "dark" ? "oxide-dark" : "oxide",
-                      content_css: mode === "dark" ? "dark" : "light",
-                    }}
-                  />
-                </FormControl>
-                <FormMessage className="text-red-500" />
-              </FormItem>
-            )}
-          />
+            const aiAnswer = await response.json();
+            console.log("AI Answer received:", aiAnswer);
 
-          <div className="flex justify-end">
-            <Button
-              type="submit"
-              className="primary-gradient w-fit text-white"
-              disabled={isSubmitting}
-            >
-              {isSubmitting ? "Submitting..." : "Submit"}
-            </Button>
-          </div>
-        </form>
-      </Form>
-    </div>
-  );
+            if (aiAnswer.reply) {
+                // Convert plain text to HTML format, preserving line breaks and formatting
+                const formattedAnswer = aiAnswer.reply
+                    .replace(/\n/g, "<br />")
+                    .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>") // Bold text
+                    .replace(/\*(.*?)\*/g, "<em>$1</em>"); // Italic text
+
+                // Update both editor and form state
+                if (editorRef.current) {
+                    const editor = editorRef.current as any;
+                    editor.setContent(formattedAnswer);
+                }
+
+                // Also update the form field value
+                form.setValue("answer", formattedAnswer);
+
+                console.log("AI answer inserted into editor successfully");
+            } else {
+                console.error(
+                    "API Error:",
+                    aiAnswer.error || "No reply received"
+                );
+                alert("Sorry, unable to generate AI answer. Please try again.");
+            }
+        } catch (error) {
+            console.error("AI Answer Generation Error:", error);
+            alert(
+                "Sorry, there was an error generating the AI answer. Please try again."
+            );
+        } finally {
+            setSetIsSubmittingAI(false);
+        }
+    };
+
+    return (
+        <div>
+            <div className="flex flex-col justify-between gap-5 sm:flex-row sm:items-center sm:gap-2">
+                <h4 className="paragraph-semibold text-dark400_light800">
+                    Write your answer here
+                </h4>
+
+                <Button
+                    className="btn light-border-2 gap-1.5 rounded-md px-4 py-2.5 text-primary-500 shadow-none dark:text-primary-500"
+                    onClick={generateAIAnswer}
+                    disabled={isSubmittingAI}
+                >
+                    {isSubmittingAI ? (
+                        <>
+                            <div className="mr-1 h-3 w-3 animate-spin rounded-full border-b-2 border-primary-500"></div>
+                            Generating...
+                        </>
+                    ) : (
+                        <>
+                            <Image
+                                src="/assets/icons/stars.svg"
+                                alt="star"
+                                width={12}
+                                height={12}
+                                className="object-contain"
+                            />
+                            Generate AI Answer
+                        </>
+                    )}
+                </Button>
+            </div>
+
+            <Form {...form}>
+                <form
+                    className="mt-6 flex w-full flex-col gap-10"
+                    onSubmit={form.handleSubmit(handleCreateAnswer)}
+                >
+                    <FormField
+                        control={form.control}
+                        name="answer"
+                        render={({ field }) => (
+                            <FormItem className="flex w-full flex-col gap-3">
+                                <FormControl className="mt-3.5">
+                                    <ClientEditor
+                                        apiKey={
+                                            process.env
+                                                .NEXT_PUBLIC_TINY_EDITOR_API_KEY
+                                        }
+                                        onInit={(evt: any, editor: any) => {
+                                            editorRef.current = editor;
+                                        }}
+                                        onBlur={field.onBlur}
+                                        onEditorChange={(content: string) =>
+                                            field.onChange(content)
+                                        }
+                                    />
+                                </FormControl>
+                                <FormMessage className="text-red-500" />
+                            </FormItem>
+                        )}
+                    />
+
+                    <div className="flex justify-end">
+                        <Button
+                            type="submit"
+                            className="primary-gradient w-fit text-white"
+                            disabled={isSubmitting}
+                        >
+                            {isSubmitting ? (
+                                <>
+                                    <div className="mr-2 h-4 w-4 animate-spin rounded-full border-b-2 border-white"></div>
+                                    Submitting...
+                                </>
+                            ) : (
+                                "Submit"
+                            )}
+                        </Button>
+                    </div>
+                </form>
+            </Form>
+        </div>
+    );
 };
 
 export default Answer;

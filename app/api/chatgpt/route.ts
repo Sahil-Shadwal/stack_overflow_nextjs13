@@ -1,48 +1,53 @@
 import { NextResponse } from "next/server";
 
 export const POST = async (request: Request) => {
-  const { question } = await request.json();
+    const { question } = await request.json();
 
-  try {
-    const response = await fetch("https://api.openai.com/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
-      },
-      body: JSON.stringify({
-        model: "gpt-3.5-turbo",
-        messages: [
-          {
-            role: "system",
-            content:
-              "You are a knowlegeable assistant that provides quality information.",
-          },
-          {
-            role: "user",
-            content: `Tell me ${question}`,
-          },
-        ],
-      }),
-    });
+    try {
+        const response = await fetch(
+            `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${process.env.GEMINI_API_KEY}`,
+            {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    contents: [
+                        {
+                            parts: [
+                                {
+                                    text: `You are a knowledgeable assistant that provides quality information. Tell me ${question}`,
+                                },
+                            ],
+                        },
+                    ],
+                }),
+            }
+        );
 
-    const responseData = await response.json();
-    if (
-      responseData.choices &&
-      responseData.choices[0] &&
-      responseData.choices[0].message
-    ) {
-      const reply = responseData.choices[0].message.content;
-      return NextResponse.json({ reply });
-    } else {
-      return NextResponse.json({ error: "Unexpected API response structure" });
+        const responseData = await response.json();
+
+        if (
+            responseData.candidates &&
+            responseData.candidates[0] &&
+            responseData.candidates[0].content &&
+            responseData.candidates[0].content.parts &&
+            responseData.candidates[0].content.parts[0]
+        ) {
+            const reply = responseData.candidates[0].content.parts[0].text;
+            return NextResponse.json({ reply });
+        } else {
+            return NextResponse.json({
+                error: "Unexpected API response structure",
+                response: responseData,
+            });
+        }
+        // const responseData = await response.json();
+        // const reply = responseData.choices[0].message.content;
+
+        // return NextResponse.json({ reply });
+    } catch (error: any) {
+        console.error(error);
+        return NextResponse.json({ error: error.message });
     }
-    // const responseData = await response.json();
-    // const reply = responseData.choices[0].message.content;
-
-    // return NextResponse.json({ reply });
-  } catch (error: any) {
-    console.error(error);
-    return NextResponse.json({ error: error.message });
-  }
 };
