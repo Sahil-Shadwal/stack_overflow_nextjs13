@@ -42,14 +42,19 @@ export const POST = async (request: Request) => {
         }
 
         console.log("Making request to Gemini API...");
-
+        
+        // Add timeout to the fetch request to prevent hanging
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 8000); // 8 second timeout
+        
         const response = await fetch(
-            `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${process.env.GEMINI_API_KEY}`,
+            `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${process.env.GEMINI_API_KEY}`,
             {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
                 },
+                signal: controller.signal,
                 body: JSON.stringify({
                     contents: [
                         {
@@ -60,9 +65,15 @@ export const POST = async (request: Request) => {
                             ],
                         },
                     ],
+                    generationConfig: {
+                        maxOutputTokens: 1000,
+                        temperature: 0.7,
+                    },
                 }),
             }
         );
+        
+        clearTimeout(timeoutId);
 
         console.log("Gemini API response status:", response.status);
 
@@ -106,11 +117,16 @@ export const POST = async (request: Request) => {
         }
     } catch (error: any) {
         console.error("Error in chatgpt API route:", error);
-        return NextResponse.json(
-            {
-                error: error.message || "Internal server error",
-            },
-            { status: 500 }
-        );
+        
+        // Handle specific timeout errors
+        if (error.name === 'AbortError') {
+            return NextResponse.json({ 
+                error: "Request timeout - the AI service is taking too long to respond. Please try again with a shorter question." 
+            }, { status: 408 });
+        }
+        
+        return NextResponse.json({ 
+            error: error.message || "Internal server error" 
+        }, { status: 500 });
     }
 };
