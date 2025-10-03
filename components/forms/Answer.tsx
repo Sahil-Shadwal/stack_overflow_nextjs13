@@ -110,7 +110,7 @@ const Answer = ({ question, questionId, authorId }: Props) => {
                     errorMessage =
                         "AI service is temporarily unavailable. Please try again later.";
                 } else if (response.status === 408) {
-                    errorMessage = 
+                    errorMessage =
                         "The AI is taking too long to respond. Please try again with a shorter question.";
                 } else if (response.status === 400) {
                     errorMessage =
