@@ -47,47 +47,70 @@ export const POST = async (request: Request) => {
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 8000); // 8 second timeout
 
-        const response = await fetch(
-            `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${process.env.GEMINI_API_KEY}`,
-            {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                signal: controller.signal,
-                body: JSON.stringify({
-                    contents: [
-                        {
-                            parts: [
+        // Try multiple models in order of preference
+        const models = ['gemini-pro', 'gemini-1.5-flash', 'gemini-1.5-pro'];
+        let response: Response | null = null;
+        let lastError = '';
+
+        for (const model of models) {
+            try {
+                console.log(`Trying model: ${model}`);
+                response = await fetch(
+                    `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${process.env.GEMINI_API_KEY}`,
+                    {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json",
+                        },
+                        signal: controller.signal,
+                        body: JSON.stringify({
+                            contents: [
                                 {
-                                    text: `You are a knowledgeable assistant that provides quality information. Tell me ${question}`,
+                                    parts: [
+                                        {
+                                            text: `You are a knowledgeable assistant that provides quality information. Tell me ${question}`,
+                                        },
+                                    ],
                                 },
                             ],
-                        },
-                    ],
-                    generationConfig: {
-                        maxOutputTokens: 1000,
-                        temperature: 0.7,
-                    },
-                }),
+                            generationConfig: {
+                                maxOutputTokens: 1000,
+                                temperature: 0.7,
+                            },
+                        }),
+                    }
+                );
+
+                if (response.ok) {
+                    console.log(`Successfully connected with model: ${model}`);
+                    break;
+                } else {
+                    const errorText = await response.text();
+                    lastError = `${model}: ${response.status} - ${errorText}`;
+                    console.log(`Model ${model} failed:`, lastError);
+                    response = null;
+                }
+            } catch (error: any) {
+                lastError = `${model}: ${error.message}`;
+                console.log(`Model ${model} error:`, error.message);
+                response = null;
             }
-        );
+        }
 
         clearTimeout(timeoutId);
 
-        console.log("Gemini API response status:", response.status);
-
-        if (!response.ok) {
-            const errorText = await response.text();
-            console.error("Gemini API error:", response.status, errorText);
+        if (!response) {
+            console.error("All Gemini models failed:", lastError);
             return NextResponse.json(
                 {
-                    error: `API request failed with status ${response.status}`,
-                    details: errorText,
+                    error: "All AI models are currently unavailable",
+                    details: lastError,
                 },
-                { status: 500 }
+                { status: 503 }
             );
         }
+
+        console.log("Gemini API response status:", response.status);
 
         const responseData = await response.json();
         console.log(
